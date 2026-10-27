@@ -1,0 +1,6 @@
+{
+  "name": "Cloud Set Storage",
+  "description": "Cloud Set Storage Android application with CameraX and Google Drive auto-backup",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

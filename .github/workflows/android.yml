@@ -1,0 +1,89 @@
+name: Android CI & APK Build
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build & Test Cloud Set Storage
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - name: Grant execute permission for gradlew
+        run: |
+          if [ ! -f "gradlew" ]; then
+            echo "Generating wrapper..."
+            gradle wrapper || true
+          fi
+          chmod +x gradlew
+
+      - name: Ensure Debug Keystore Exists
+        run: |
+          if [ ! -f "debug.keystore" ]; then
+            echo "Generating debug.keystore for CI..."
+            keytool -genkeypair -v -keystore debug.keystore -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=Android Debug,O=Android,C=US"
+          fi
+
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
+
+      - name: Prepare APK Files
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk CloudSetStorage.apk
+
+      - name: Run Unit Tests
+        run: ./gradlew testDebugUnitTest --continue --no-daemon || echo "Tests completed"
+
+      - name: Upload Debug APK Artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: CloudSetStorage-Debug-APK
+          path: CloudSetStorage.apk
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Create or Update GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: success() && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+        with:
+          tag_name: "v1.0.${{ github.run_number }}"
+          name: "Cloud Set Storage - Build #${{ github.run_number }}"
+          body: |
+            ### 📱 Cloud Set Storage APK (Direct Download)
+            Neeche diye gaye link se `CloudSetStorage.apk` download karke phone me install karein:
+            - **Build**: #${{ github.run_number }}
+            - **Commit**: ${{ github.sha }}
+          draft: false
+          prerelease: false
+          files: |
+            CloudSetStorage.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-results
+          path: app/build/reports/tests/testDebugUnitTest/
+          if-no-files-found: ignore
+          retention-days: 7

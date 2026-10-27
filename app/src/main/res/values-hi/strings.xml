@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Cloud Set Storage</string>
+    <string name="app_tagline">कैमरा + गूगल ड्राइव ऑटो-बैकअप</string>
+    <string name="developer_credit">प्रवीण द्वारा निर्मित</string>
+    <string name="developer_email">praveensahani9273@gmail.com</string>
+
+    <!-- Navigation -->
+    <string name="nav_camera">कैमरा</string>
+    <string name="nav_gallery">गैलरी</string>
+    <string name="nav_drive">ड्राइव</string>
+    <string name="nav_settings">सेटिंग्स</string>
+</resources>
